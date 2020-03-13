@@ -15,7 +15,7 @@ router
 		console.log({ title: bookTitle });
 		const [err, data] = await theSureThing(Book.create({ title: bookTitle }));
 		if (err) {
-			console.err(`can not save the book with title ${bookTitle}, Error ${err}`);
+			res.json(err.message);
 			return;
 		}
 		const { _id: unique_id, title } = data;
@@ -49,6 +49,7 @@ router
 		// if none exists with that id and no error occurs
 		if (data === null && err === null) {
 			res.send('no book exists');
+			return;
 		}
 
 		const { _id, title, comments } = data;
