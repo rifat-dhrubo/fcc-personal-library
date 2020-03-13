@@ -6,14 +6,14 @@ const { theSureThing } = require('../utils/handlers');
 
 router
 	.route('/')
-	.get((req, res) => {
-		//response will be array of book objects
-		//json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
+	.get(async (req, res) => {
+		[err, data] = await theSureThing(Book.getCommentCount());
+		res.json(data);
 	})
 	.post(async (req, res) => {
 		const bookTitle = req.body.title;
 		console.log({ title: bookTitle });
-		[err, data] = await theSureThing(Book.create({ title: bookTitle }));
+		const [err, data] = await theSureThing(Book.create({ title: bookTitle }));
 		if (err) {
 			console.err(`can not save the book with title ${bookTitle}, Error ${err}`);
 			return;
@@ -25,24 +25,72 @@ router
 			title,
 		});
 	})
-	.delete((req, res) => {
+	.delete(async (req, res) => {
 		//if successful response will be 'complete delete successful'
+		const [err, data] = await theSureThing(Book.deleteMany().exec());
+
+		// in case of errors
+		if (err) res.json(err);
+
+		if (data.ok === 1) {
+			res.send('complete delete successful');
+		}
 	});
 
 router
 	.route('/:id')
-	.get((req, res) => {
-		const bookid = req.params.id;
-		//json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
+	.get(async (req, res) => {
+		const bookId = req.params.id;
+		const [err, data] = await theSureThing(Book.findOne({ _id: bookId }).exec());
+
+		// in case of errors
+		if (err) res.json(err);
+
+		// if none exists with that id and no error occurs
+		if (data === null && err === null) {
+			res.send('no book exists');
+		}
+
+		const { _id, title, comments } = data;
+		res.json({ _id, title, comments });
 	})
-	.post((req, res) => {
-		const bookid = req.params.id;
+	.post(async (req, res) => {
+		const bookId = req.params.id;
 		const comment = req.body.comment;
-		//json res format same as .get
+
+		const [err, data] = await theSureThing(
+			Book.findOneAndUpdate(
+				{ _id: bookId },
+				{ $addToSet: { comments: [comment] } },
+				{ new: true }
+			).exec()
+		);
+
+		// in case of errors
+		if (err) res.json(err);
+
+		// if none exists with that id and no error occurs
+		if (data === null && err === null) {
+			res.send('no book exists');
+		}
+
+		const { _id, title, comments } = data;
+		res.json({ _id, title, comments });
 	})
-	.delete((req, res) => {
-		const bookid = req.params.id;
-		//if successful response will be 'delete successful'
+	.delete(async (req, res) => {
+		const bookId = req.params.id;
+		const [err, data] = await theSureThing(Book.findOneAndDelete({ _id: bookId }).exec());
+		// in case of errors
+		if (err) res.json(err);
+
+		// if none exists with that id and no error occurs
+		if (data === null && err === null) {
+			res.send('no book exists');
+		}
+
+		if (data) {
+			res.send('delete successful');
+		}
 	});
 
 module.exports = router;
