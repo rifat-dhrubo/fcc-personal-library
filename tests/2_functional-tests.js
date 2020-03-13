@@ -33,7 +33,23 @@ suite('Functional Tests', function() {
 	suite('Routing tests', function() {
 		suite('POST /api/books with title => create book object/expect book object', function() {
 			test('Test POST /api/books with title', function(done) {
-				//done();
+				chai.request(server)
+					.post('/api/books')
+					.send({
+						title: 'test book',
+					})
+					.end(function(err, res) {
+						assert.equal(res.status, 200);
+						assert.isObject(res.body, 'response should be an object');
+						assert.property(res.title, 'title', 'Books should have a title');
+						assert.property(
+							res.unique_id,
+							'unique_id',
+							'Books should have a unique_id'
+						);
+						assert.isString(res.title, 'Books title should be a String');
+					});
+				done();
 			});
 
 			test('Test POST /api/books with no title given', function(done) {

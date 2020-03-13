@@ -1,6 +1,8 @@
 const expect = require('chai').expect;
 const express = require('express');
 const router = express.Router();
+const Book = require('../models/Books');
+const { theSureThing } = require('../utils/handlers');
 
 router
 	.route('/')
@@ -8,9 +10,20 @@ router
 		//response will be array of book objects
 		//json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
 	})
-	.post((req, res) => {
-		const title = req.body.title;
-		//response will contain new book object including atleast _id and title
+	.post(async (req, res) => {
+		const bookTitle = req.body.title;
+		console.log({ title: bookTitle });
+		[err, data] = await theSureThing(Book.create({ title: bookTitle }));
+		if (err) {
+			console.err(`can not save the book with title ${bookTitle}, Error ${err}`);
+			return;
+		}
+		const { _id: unique_id, title } = data;
+
+		res.json({
+			unique_id,
+			title,
+		});
 	})
 	.delete((req, res) => {
 		//if successful response will be 'complete delete successful'
