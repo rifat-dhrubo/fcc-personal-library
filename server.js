@@ -7,8 +7,17 @@ const runner = require('./test-runner');
 require('dotenv').config();
 const path = require('path');
 const booksRouter = require('./routes/booksRouter');
+const helmet = require('helmet');
 
 const app = express();
+
+app.use(
+	helmet({
+		hidePoweredBy: { setTo: 'PHP 4.2.0' },
+	})
+);
+
+app.use(helmet.noCache());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
